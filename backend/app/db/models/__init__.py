@@ -4,3 +4,5 @@ from app.db.models.sensor import Sensor
 from app.db.models.log import Log
 from app.db.models.event import Event
 from app.db.models.alert import Alert
+
+__all__ = ["User", "Area", "Sensor", "Log", "Event", "Alert"]
