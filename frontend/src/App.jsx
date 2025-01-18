@@ -7,6 +7,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import MenuAdmin from './pages/menu/MenuAdmi';
+import MenuUser from './pages/menu/MenuUser';
 
 function App() {
   
@@ -21,6 +23,10 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/MenuUser" element={<MenuUser />} />
+          <Route path="/MenuAdmin" element={<MenuAdmin/>} />
         </Routes>
       </Router> 
       <Footer /> 

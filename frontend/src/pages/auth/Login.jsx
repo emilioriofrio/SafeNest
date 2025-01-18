@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Login = () => {
@@ -6,24 +7,50 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Validación de correo
     if (!/\S+@\S+\.\S+/.test(email)) {
       setMessage("Por favor, ingresa un correo válido.");
       return;
     }
+
     setIsLoading(true);
     setMessage("");
+
     try {
+      // Petición al backend para iniciar sesión
       const response = await axios.post("http://localhost:8000/login/", {
         correo: email,
         contrasena: password,
       });
-      setMessage(`Bienvenido, ${response.data.nombre || "usuario"}`);
+
+      const { user_id, nombre, role } = response.data;
+
+      // Guardar información del usuario en localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ user_id, nombre, role })
+      );
+
+      setMessage(`Bienvenido, ${nombre || "usuario"}`);
+
+      // Redirigir dependiendo del rol del usuario
+      if (role === "superadministrador") {
+        navigate("/MenuAdmin");
+      } else {
+        navigate("/MenuUser");
+      }
+
+      // Recargar la página
+      window.location.reload();
     } catch (error) {
       setMessage(
-        error.response?.data?.detail || "Error al iniciar sesión. Inténtalo nuevamente."
+        error.response?.data?.detail ||
+          "Error al iniciar sesión. Inténtalo nuevamente."
       );
     } finally {
       setIsLoading(false);
@@ -38,7 +65,9 @@ const Login = () => {
         </h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
             <input
               type="email"
               value={email}
@@ -49,7 +78,9 @@ const Login = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Contraseña
+            </label>
             <input
               type="password"
               value={password}
@@ -72,7 +103,10 @@ const Login = () => {
         )}
         <p className="mt-4 text-center text-gray-600">
           ¿No tienes una cuenta?{" "}
-          <a href="/register" className="text-blue-700 font-medium hover:underline">
+          <a
+            href="/register"
+            className="text-blue-700 font-medium hover:underline"
+          >
             Regístrate aquí
           </a>
         </p>

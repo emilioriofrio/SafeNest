@@ -1,7 +1,7 @@
 import os
 import psycopg2
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -56,6 +56,10 @@ class UserLogin(BaseModel):
     correo: str
     contrasena: str
 
+class UpdateUserRole(BaseModel):
+    user_id: int
+    new_role: str
+
 # Registro de usuario
 @app.post("/register")
 def register_user(user: UserRegister):
@@ -105,7 +109,7 @@ def login_user(user: UserLogin):
     try:
         # Buscar usuario
         cursor.execute(
-            "SELECT id, contrasena FROM Usuarios WHERE correo = %s;",
+            "SELECT id, contrasena, rol FROM Usuarios WHERE correo = %s;",
             (user.correo,)
         )
         result = cursor.fetchone()
@@ -113,16 +117,72 @@ def login_user(user: UserLogin):
         if not result:
             raise HTTPException(status_code=404, detail="User not found")
 
-        user_id, hashed_password = result
+        user_id, hashed_password, role = result
 
         # Verificar contraseña
         if not pwd_context.verify(user.contrasena, hashed_password):
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        return {"message": "Login successful", "user_id": user_id}
+        return {"message": "Login successful", "user_id": user_id, "role": role}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Login failed: {e}")
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# Obtener usuarios (solo superadministradores)
+@app.get("/users")
+def get_users():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        # Obtener usuarios que no sean superadministradores
+        cursor.execute("SELECT id, nombre, correo, rol FROM Usuarios WHERE rol != 'superadministrador';")
+        users = cursor.fetchall()
+
+        return [
+            {"id": user[0], "nombre": user[1], "correo": user[2], "rol": user[3]} for user in users
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve users: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+# Actualizar rol de un usuario (solo superadministradores)
+@app.put("/update-role")
+def update_user_role(data: UpdateUserRole):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Validar rol
+    valid_roles = {"administrador", "colaborador"}
+    if data.new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    try:
+        # Actualizar rol del usuario
+        cursor.execute(
+            """
+            UPDATE Usuarios
+            SET rol = %s
+            WHERE id = %s AND rol != 'superadministrador';
+            """,
+            (data.new_role, data.user_id)
+        )
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found or cannot modify superadministrador")
+
+        return {"message": "User role updated successfully"}
+
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update role: {e}")
 
     finally:
         cursor.close()

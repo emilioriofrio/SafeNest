@@ -6,6 +6,7 @@ const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("colaborador"); // Rol por defecto
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -43,7 +44,9 @@ const Register = () => {
         nombre: name,
         correo: email,
         contrasena: password,
+        rol: role,
       });
+
       setMessage(response.data.message);
 
       // Limpiar campos y redirigir al inicio de sesión
@@ -102,6 +105,19 @@ const Register = () => {
               placeholder="Crea una contraseña"
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Rol</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="superadministrador">Superadministrador</option>
+              <option value="administrador">Administrador</option>
+              <option value="colaborador">Colaborador</option>
+            </select>
           </div>
           <button
             type="submit"
