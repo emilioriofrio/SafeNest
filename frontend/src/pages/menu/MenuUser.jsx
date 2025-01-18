@@ -8,7 +8,7 @@ const MenuUser = () => {
   const inviteCollaborator = async () => {
     try {
       await axios.post(
-        "http://localhost:8000/invite-collaborator",
+        "https://tight-lexis-safenest-83078a32.koyeb.app/invite-collaborator",
         { correo: email },
         {
           headers: {

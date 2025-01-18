@@ -23,7 +23,7 @@ const Login = () => {
 
     try {
       // Petición al backend para iniciar sesión
-      const response = await axios.post("http://localhost:8000/login/", {
+      const response = await axios.post("https://tight-lexis-safenest-83078a32.koyeb.app/login/", {
         correo: email,
         contrasena: password,
       });
