@@ -186,6 +186,9 @@ def update_user_role(data: UpdateUserRole):
         raise HTTPException(status_code=400, detail="Invalid role")
 
     try:
+        # Agregar logs para verificar los datos de entrada
+        print(f"Attempting to update role for user_id: {data.user_id} to {data.new_role}")
+
         # Actualizar rol del usuario
         cursor.execute(
             """
@@ -197,18 +200,22 @@ def update_user_role(data: UpdateUserRole):
         )
         connection.commit()
 
+        # Verificar si se realizó algún cambio
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="User not found or cannot modify superadministrador")
 
         return {"message": "User role updated successfully"}
 
     except Exception as e:
+        # Agregar logs para el error
+        print(f"Error updating role: {e}")
         connection.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update role: {e}")
 
     finally:
         cursor.close()
         connection.close()
+
 
 
 @app.post("/install")

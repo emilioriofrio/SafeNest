@@ -109,10 +109,12 @@ const MenuAdmi = () => {
 
   const promoteUser = async (userId) => {
     try {
-      // Promover colaborador a administrador
       await axios.put(
-        `https://tight-lexis-safenest-83078a32.koyeb.app/promote-user/${userId}`,
-        { rol: "administrador" },
+        `https://tight-lexis-safenest-83078a32.koyeb.app/update-role`,
+        {
+          user_id: userId,
+          new_role: "administrador", // Rol al que deseas promover
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -130,6 +132,7 @@ const MenuAdmi = () => {
       console.error("Error promoting user:", error);
     }
   };
+  
 
   const handlePurchaseRequest = async (requestId, action) => {
     try {
