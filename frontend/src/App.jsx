@@ -9,6 +9,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import MenuAdmin from './pages/menu/MenuAdmi';
 import MenuUser from './pages/menu/MenuUser';
+import MyCount  from './pages/auth/mycount';
 
 function App() {
   
@@ -27,6 +28,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/MenuUser" element={<MenuUser />} />
           <Route path="/MenuAdmin" element={<MenuAdmin/>} />
+          <Route path="/MyCount" element={<MyCount/>} />
         </Routes>
       </Router> 
       <Footer /> 

@@ -40,7 +40,7 @@ const Register = () => {
 
     try {
       // Enviar datos al backend
-      const response = await axios.post("http://localhost:8000/register/", {
+      const response = await axios.post("https://tight-lexis-safenest-83078a32.koyeb.app/register/", {
         nombre: name,
         correo: email,
         contrasena: password,

@@ -6,10 +6,10 @@ const MenuUser = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [message, setMessage] = useState("");
   const [groupId, setGroupId] = useState("");
-  const [serviceMessage, setServiceMessage] = useState("");
   const [sensorData, setSensorData] = useState([]);
   const [logs, setLogs] = useState([]);
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
+  const [alerts, setAlerts] = useState([]);
 
   const plans = [
     {
@@ -51,6 +51,7 @@ const MenuUser = () => {
       if (user.role === "administrador") {
         fetchSensorData();
         fetchLogs();
+        fetchAlerts();
       }
     }
   }, []);
@@ -84,6 +85,22 @@ const MenuUser = () => {
       setLogs(response.data);
     } catch (error) {
       console.error("Error fetching logs:", error);
+    }
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await axios.get(
+        "https://tight-lexis-safenest-83078a32.koyeb.app/alerts",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setAlerts(response.data);
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
     }
   };
 
@@ -152,16 +169,11 @@ const MenuUser = () => {
     return (
       <div className="p-6 bg-gradient-to-b from-blue-900 to-blue-700 min-h-screen text-white">
         <h1 className="text-3xl font-bold mb-4">Panel de Colaborador</h1>
-
-        {/* Mostrar planes */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Selecciona tu Plan</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan, index) => (
-              <div
-                key={index}
-                className="bg-blue-800 p-6 rounded-lg shadow-lg text-center"
-              >
+              <div key={index} className="bg-blue-800 p-6 rounded-lg shadow-lg text-center">
                 <h3 className="text-xl font-bold mb-4">{plan.name}</h3>
                 <p className="text-2xl font-semibold mb-4">{plan.price}</p>
                 <ul className="mb-4">
@@ -181,15 +193,7 @@ const MenuUser = () => {
             ))}
           </div>
         </div>
-
-        {/* Mensaje de confirmación */}
-        {message && (
-          <div className="p-4 bg-green-800 text-green-300 rounded-lg mb-6">
-            {message}
-          </div>
-        )}
-
-        {/* Opciones adicionales */}
+        {message && <div className="p-4 bg-green-800 text-green-300 rounded-lg mb-6">{message}</div>}
         <div>
           <h2 className="text-2xl font-semibold mb-4">Opciones Adicionales</h2>
           <ul className="space-y-4">
@@ -218,25 +222,16 @@ const MenuUser = () => {
     return (
       <div className="p-6 bg-gradient-to-b from-blue-900 to-blue-700 min-h-screen text-white">
         <h1 className="text-3xl font-bold mb-4">Panel de Administrador</h1>
-
-        {/* Información de sensores */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Información de Sensores</h2>
           <ul className="space-y-4">
             {sensorData.map((sensor, index) => (
-              <li
-                key={index}
-                className="bg-blue-800 p-4 rounded-lg flex justify-between"
-              >
-                <span>
-                  Tipo: {sensor.tipo} | Estado: {sensor.estado} | Área: {sensor.area_id}
-                </span>
+              <li key={index} className="bg-blue-800 p-4 rounded-lg">
+                Tipo: {sensor.tipo} | Estado: {sensor.estado} | Área: {sensor.area_id}
               </li>
             ))}
           </ul>
         </div>
-
-        {/* Invitar colaborador */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Invitar Colaborador</h2>
           <input
@@ -253,26 +248,23 @@ const MenuUser = () => {
             Enviar Invitación
           </button>
         </div>
-
-        {/* Logs */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Logs de Detección</h2>
           <ul className="space-y-4">
             {logs.map((log, index) => (
-              <li
-                key={index}
-                className="bg-blue-800 p-4 rounded-lg flex justify-between"
-              >
-                <span>{log.accion} - Fecha: {new Date(log.fecha).toLocaleString()}</span>
+              <li key={index} className="bg-blue-800 p-4 rounded-lg">
+                {log.accion} - Fecha: {new Date(log.fecha).toLocaleString()}
               </li>
             ))}
           </ul>
         </div>
-
-        {/* Alertas */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Alertas</h2>
-          <p className="bg-red-800 p-4 rounded-lg">Alerta: Sensor activado en área X.</p>
+          {alerts.map((alert, index) => (
+            <div key={index} className="bg-red-800 p-4 rounded-lg">
+              {alert.mensaje}
+            </div>
+          ))}
         </div>
       </div>
     );

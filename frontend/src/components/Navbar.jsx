@@ -3,14 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Estado para el menú desplegable
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Recuperar el usuario desde localStorage (si existe)
     const storedUser = localStorage.getItem("user");
-    console.log(storedUser);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -37,7 +36,7 @@ const Navbar = () => {
         </div>
 
         {/* Desktop Menu */}
-        <ul className={`hidden md:flex space-x-6 text-blue-200`}>
+        <ul className="hidden md:flex space-x-6 text-blue-200">
           <li>
             <Link to="/" className="hover:text-white transition duration-200">
               Inicio
@@ -55,7 +54,6 @@ const Navbar = () => {
           </li>
 
           {user ? (
-            // Si el usuario está autenticado
             <>
               <li className="relative">
                 <button
@@ -73,7 +71,7 @@ const Navbar = () => {
                   <ul className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
                     <li>
                       <Link
-                        to={user.rol === "superadministrador" ? "/menu-admin" : "/menu-user"}
+                        to={user.role === "superadministrador" ? "/MenuAdmin" : "/MenuUser"}
                         className="block px-4 py-2 text-gray-700 hover:bg-blue-100"
                         onClick={() => setIsDropdownOpen(false)}
                       >
@@ -82,7 +80,7 @@ const Navbar = () => {
                     </li>
                     <li>
                       <Link
-                        to="/myaccount"
+                        to="/MyCount"
                         className="block px-4 py-2 text-gray-700 hover:bg-blue-100"
                         onClick={() => setIsDropdownOpen(false)}
                       >
@@ -102,7 +100,6 @@ const Navbar = () => {
               </li>
             </>
           ) : (
-            // Si no hay usuario autenticado
             <>
               <li>
                 <Link to="/login" className="hover:text-white transition duration-200">
