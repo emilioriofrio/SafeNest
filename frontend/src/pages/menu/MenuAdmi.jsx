@@ -4,6 +4,10 @@ import axios from "axios";
 const MenuAdmi = () => {
   const [collaborators, setCollaborators] = useState([]);
   const [administrators, setAdministrators] = useState([]);
+  const [filteredCollaborators, setFilteredCollaborators] = useState([]);
+  const [filteredAdministrators, setFilteredAdministrators] = useState([]);
+  const [searchCollaborators, setSearchCollaborators] = useState("");
+  const [searchAdministrators, setSearchAdministrators] = useState("");
   const [purchaseRequests, setPurchaseRequests] = useState([]);
   const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
@@ -26,12 +30,19 @@ const MenuAdmi = () => {
             },
           }
         );
-        setCollaborators(
-          response.data.filter((user) => user.rol === "colaborador")
+
+        const collaboratorsData = response.data.filter(
+          (user) => user.rol === "colaborador"
         );
-        setAdministrators(
-          response.data.filter((user) => user.rol === "administrador")
+        const administratorsData = response.data.filter(
+          (user) => user.rol === "administrador"
         );
+
+        setCollaborators(collaboratorsData);
+        setFilteredCollaborators(collaboratorsData);
+
+        setAdministrators(administratorsData);
+        setFilteredAdministrators(administratorsData);
 
         // Obtener solicitudes de compra
         const purchaseResponse = await axios.get(
@@ -51,6 +62,24 @@ const MenuAdmi = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    // Filtrar colaboradores en tiempo real
+    setFilteredCollaborators(
+      collaborators.filter((user) =>
+        user.nombre.toLowerCase().includes(searchCollaborators.toLowerCase())
+      )
+    );
+  }, [searchCollaborators, collaborators]);
+
+  useEffect(() => {
+    // Filtrar administradores en tiempo real
+    setFilteredAdministrators(
+      administrators.filter((user) =>
+        user.nombre.toLowerCase().includes(searchAdministrators.toLowerCase())
+      )
+    );
+  }, [searchAdministrators, administrators]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -69,7 +98,7 @@ const MenuAdmi = () => {
       return;
     }
     if (!formData.usuarioId) {
-      setMessage("Debes seleccionar un usuario colaborador.");
+      setMessage("Debes seleccionar un administrador.");
       return;
     }
 
@@ -113,7 +142,7 @@ const MenuAdmi = () => {
         `https://tight-lexis-safenest-83078a32.koyeb.app/update-role`,
         {
           user_id: userId,
-          new_role: "administrador", // Rol al que deseas promover
+          new_role: "administrador",
         },
         {
           headers: {
@@ -123,6 +152,9 @@ const MenuAdmi = () => {
       );
       setMessage("Usuario promovido a administrador exitosamente.");
       setCollaborators((prev) => prev.filter((user) => user.id !== userId));
+      setFilteredCollaborators((prev) =>
+        prev.filter((user) => user.id !== userId)
+      );
       setAdministrators((prev) => [
         ...prev,
         collaborators.find((user) => user.id === userId),
@@ -130,28 +162,6 @@ const MenuAdmi = () => {
     } catch (error) {
       setMessage("Error al promover usuario. Inténtalo nuevamente.");
       console.error("Error promoting user:", error);
-    }
-  };
-  
-
-  const handlePurchaseRequest = async (requestId, action) => {
-    try {
-      await axios.put(
-        `https://tight-lexis-safenest-83078a32.koyeb.app/purchase-requests/${requestId}`,
-        { action },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      setMessage(`Solicitud ${action === "accept" ? "aceptada" : "rechazada"} exitosamente.`);
-      setPurchaseRequests((prev) =>
-        prev.filter((request) => request.id !== requestId)
-      );
-    } catch (error) {
-      setMessage("Error al procesar la solicitud. Inténtalo nuevamente.");
-      console.error("Error handling purchase request:", error);
     }
   };
 
@@ -226,7 +236,7 @@ const MenuAdmi = () => {
               <option value="" disabled>
                 Selecciona un administrador
               </option>
-              {administrators.map((user) => (
+              {filteredAdministrators.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.nombre}
                 </option>
@@ -247,43 +257,18 @@ const MenuAdmi = () => {
         </form>
       </div>
 
-      {/* Listado de solicitudes de compra */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold mb-4">Solicitudes de Compra</h2>
-        <ul className="space-y-4">
-          {purchaseRequests.map((request) => (
-            <li
-              key={request.id}
-              className="bg-blue-800 p-4 rounded-lg flex justify-between items-center"
-            >
-              <span>
-                {request.nombreUsuario} solicitó {request.sensoresSonido} sensores de sonido y{" "}
-                {request.sensoresMovimiento} sensores de movimiento.
-              </span>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handlePurchaseRequest(request.id, "accept")}
-                  className="bg-green-500 px-3 py-1 rounded-lg hover:bg-green-700 transition duration-200"
-                >
-                  Aceptar
-                </button>
-                <button
-                  onClick={() => handlePurchaseRequest(request.id, "reject")}
-                  className="bg-red-500 px-3 py-1 rounded-lg hover:bg-red-700 transition duration-200"
-                >
-                  Rechazar
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Listado de usuarios colaboradores */}
+      {/* Buscador y listado de colaboradores */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Colaboradores</h2>
+        <input
+          type="text"
+          value={searchCollaborators}
+          onChange={(e) => setSearchCollaborators(e.target.value)}
+          placeholder="Buscar colaboradores..."
+          className="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 text-black"
+        />
         <ul className="space-y-4">
-          {collaborators.map((user) => (
+          {filteredCollaborators.map((user) => (
             <li
               key={user.id}
               className="bg-blue-800 p-4 rounded-lg flex justify-between items-center"
@@ -302,11 +287,18 @@ const MenuAdmi = () => {
         </ul>
       </div>
 
-      {/* Listado de usuarios administradores */}
+      {/* Buscador y listado de administradores */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Administradores</h2>
+        <input
+          type="text"
+          value={searchAdministrators}
+          onChange={(e) => setSearchAdministrators(e.target.value)}
+          placeholder="Buscar administradores..."
+          className="w-full px-4 py-2 rounded-lg border border-gray-300 mb-4 text-black"
+        />
         <ul className="space-y-4">
-          {administrators.map((user) => (
+          {filteredAdministrators.map((user) => (
             <li
               key={user.id}
               className="bg-blue-800 p-4 rounded-lg flex justify-between"

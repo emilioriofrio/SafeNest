@@ -82,6 +82,13 @@ class InstallationRequest(BaseModel):
     user_id: int
     num_sound_sensors: int
     num_motion_sensors: int
+
+# Modelo de solicitud para asignar un área
+class AssignAreaRequest(BaseModel):
+    ubicacion: str
+    sensoresSonido: int
+    sensoresMovimiento: int
+    usuarioId: int
 # Registro de usuario
 @app.post("/register")
 def register_user(user: UserRegister):
@@ -368,6 +375,61 @@ def request_service_info(service_info_request: ServiceInfoRequest):
         return {"message": "Service information request submitted successfully.", "request_id": request_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing service info request: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
+
+@app.post("/assign-area")
+def assign_area(request: AssignAreaRequest):
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # Verificar si el usuario tiene el rol correcto (administrador)
+        cursor.execute("SELECT rol FROM usuarios WHERE id = %s;", (request.usuarioId,))
+        user = cursor.fetchone()
+        if not user or user["rol"] != "administrador":
+            raise HTTPException(status_code=403, detail="El usuario no tiene permisos para esta acción.")
+
+        # Crear un área para el usuario
+        cursor.execute(
+            """
+            INSERT INTO areas (nombre, fecha_registro, usuario_id)
+            VALUES (%s, NOW(), %s)
+            RETURNING id;
+            """,
+            (request.ubicacion, request.usuarioId)
+        )
+        area_id = cursor.fetchone()["id"]
+
+        # Insertar sensores de sonido
+        for _ in range(request.sensoresSonido):
+            cursor.execute(
+                """
+                INSERT INTO sensores (tipo, estado, area_id, fecha_instalacion)
+                VALUES ('sonido', 'activo', %s, NOW());
+                """,
+                (area_id,)
+            )
+
+        # Insertar sensores de movimiento
+        for _ in range(request.sensoresMovimiento):
+            cursor.execute(
+                """
+                INSERT INTO sensores (tipo, estado, area_id, fecha_instalacion)
+                VALUES ('movimiento', 'activo', %s, NOW());
+                """,
+                (area_id,)
+            )
+
+        # Confirmar la transacción
+        connection.commit()
+
+        return {"message": "Área y sensores asignados correctamente.", "area_id": area_id}
+
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Error asignando área y sensores: {str(e)}")
     finally:
         cursor.close()
         connection.close()
