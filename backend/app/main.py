@@ -89,6 +89,13 @@ class AssignAreaRequest(BaseModel):
     sensoresSonido: int
     sensoresMovimiento: int
     usuarioId: int
+
+# Modelo de solicitud
+class UpdateSensorRequest(BaseModel):
+    sensor_id: int
+    estado: str
+    ultima_actividad: str  # Formato ISO 8601 (YYYY-MM-DDTHH:MM:SS)
+    ubicacion: str
 # Registro de usuario
 @app.post("/register")
 def register_user(user: UserRegister):
@@ -494,6 +501,78 @@ def get_admin_logs(admin_id: int):
     finally:
         cursor.close()
         connection.close()
+
+@app.post("/update-sensor")
+def update_sensor(request: UpdateSensorRequest):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        # Actualizar información del sensor
+        cursor.execute(
+            """
+            UPDATE sensores
+            SET estado = %s, ultima_actividad = %s, ubicacion = %s
+            WHERE id = %s;
+            """,
+            (request.estado, request.ultima_actividad, request.ubicacion, request.sensor_id)
+        )
+        connection.commit()
+
+        # Verificar si se realizó algún cambio
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Sensor no encontrado.")
+
+        return {"message": "Sensor actualizado correctamente."}
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al actualizar el sensor: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@app.get("/logs")
+def get_logs():
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+    try:
+        # Obtener los logs más recientes (últimos 50 registros como ejemplo)
+        cursor.execute(
+            """
+            SELECT id, sensor_id, accion, fecha
+            FROM logs
+            ORDER BY fecha DESC
+            LIMIT 50;
+            """
+        )
+        logs = cursor.fetchall()
+        return logs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener los logs: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
+
+# Ejemplo de endpoint actualizado
+@app.get("/sensors")
+def get_sensors():
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        cursor.execute("""
+            SELECT s.id, s.tipo, s.estado, a.nombre AS ubicacion, s.fecha_instalacion
+            FROM sensores s
+            INNER JOIN areas a ON s.ubicacion = a.id;
+        """)
+        sensors = cursor.fetchall()
+        return sensors
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching sensors: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
 # Verificar API
 @app.get("/")
 def root():
