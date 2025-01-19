@@ -87,7 +87,7 @@ const MenuAdmi = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Validación básica
     if (!formData.ubicacion.trim()) {
       setMessage("La ubicación no puede estar vacía.");
@@ -101,19 +101,19 @@ const MenuAdmi = () => {
       setMessage("Debes seleccionar un administrador.");
       return;
     }
-
+  
     setLoading(true);
     setMessage("");
-
+  
     try {
       // Enviar datos al backend para asignar el área y sensores
-      await axios.post(
+      const response = await axios.post(
         "https://tight-lexis-safenest-83078a32.koyeb.app/assign-area",
         {
           ubicacion: formData.ubicacion,
           sensoresSonido: parseInt(formData.sensoresSonido),
           sensoresMovimiento: parseInt(formData.sensoresMovimiento),
-          usuarioId: formData.usuarioId,
+          usuarioId: parseInt(formData.usuarioId),
         },
         {
           headers: {
@@ -121,7 +121,9 @@ const MenuAdmi = () => {
           },
         }
       );
-      setMessage("Instalación registrada exitosamente.");
+  
+      // Mostrar mensaje de éxito con el área creada
+      setMessage(`Instalación registrada exitosamente. ID del área: ${response.data.area_id}`);
       setFormData({
         ubicacion: "",
         sensoresSonido: 0,
@@ -129,7 +131,10 @@ const MenuAdmi = () => {
         usuarioId: "",
       });
     } catch (error) {
-      setMessage("Error al registrar la instalación. Inténtalo nuevamente.");
+      // Manejar errores del backend
+      setMessage(
+        error.response?.data?.detail || "Error al registrar la instalación. Inténtalo nuevamente."
+      );
       console.error("Error submitting installation:", error);
     } finally {
       setLoading(false);

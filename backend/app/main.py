@@ -402,22 +402,22 @@ def assign_area(request: AssignAreaRequest):
         )
         area_id = cursor.fetchone()["id"]
 
-        # Insertar sensores de sonido
+        # Insertar sensores de sonido (ajustar al valor correcto del enum)
         for _ in range(request.sensoresSonido):
             cursor.execute(
                 """
                 INSERT INTO sensores (tipo, estado, area_id, fecha_instalacion)
-                VALUES ('sonido', 'activo', %s, NOW());
+                VALUES ('KY-038', 'activo', %s, NOW());
                 """,
                 (area_id,)
             )
 
-        # Insertar sensores de movimiento
+        # Insertar sensores de movimiento (ajustar al valor correcto del enum)
         for _ in range(request.sensoresMovimiento):
             cursor.execute(
                 """
                 INSERT INTO sensores (tipo, estado, area_id, fecha_instalacion)
-                VALUES ('movimiento', 'activo', %s, NOW());
+                VALUES ('PIR', 'activo', %s, NOW());
                 """,
                 (area_id,)
             )
