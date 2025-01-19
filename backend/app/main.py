@@ -433,6 +433,59 @@ def assign_area(request: AssignAreaRequest):
     finally:
         cursor.close()
         connection.close()
+@app.put("/degrade-admin")
+def degrade_admin(data: UpdateUserRole):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            UPDATE usuarios
+            SET rol = 'colaborador'
+            WHERE id = %s AND rol = 'administrador';
+            """,
+            (data.user_id,)
+        )
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Admin not found or already a collaborator")
+
+        return {"message": "Administrador degradado a colaborador exitosamente"}
+
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating role: {e}")
+
+    finally:
+        cursor.close()
+        connection.close()
+@app.get("/admin-logs/{admin_id}")
+def get_admin_logs(admin_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        cursor.execute(
+            """
+            SELECT logs.id, logs.accion, logs.fecha, logs.sensor_id
+            FROM logs
+            JOIN sensores ON logs.sensor_id = sensores.id
+            JOIN areas ON sensores.area_id = areas.id
+            WHERE areas.usuario_id = %s;
+            """,
+            (admin_id,)
+        )
+        logs = cursor.fetchall()
+        return logs
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching logs: {e}")
+
+    finally:
+        cursor.close()
+        connection.close()
 # Verificar API
 @app.get("/")
 def root():

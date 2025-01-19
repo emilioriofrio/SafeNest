@@ -8,7 +8,10 @@ const MenuAdmi = () => {
   const [filteredAdministrators, setFilteredAdministrators] = useState([]);
   const [searchCollaborators, setSearchCollaborators] = useState("");
   const [searchAdministrators, setSearchAdministrators] = useState("");
-  const [purchaseRequests, setPurchaseRequests] = useState([]);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [adminSensors, setAdminSensors] = useState([]);
+  const [adminLogs, setAdminLogs] = useState([]);
+  const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
     ubicacion: "",
@@ -19,7 +22,6 @@ const MenuAdmi = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Obtener usuarios colaboradores, administradores y solicitudes de compra
     const fetchData = async () => {
       try {
         const response = await axios.get(
@@ -43,17 +45,6 @@ const MenuAdmi = () => {
 
         setAdministrators(administratorsData);
         setFilteredAdministrators(administratorsData);
-
-        // Obtener solicitudes de compra
-        const purchaseResponse = await axios.get(
-          "https://tight-lexis-safenest-83078a32.koyeb.app/purchase-requests",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setPurchaseRequests(purchaseResponse.data);
       } catch (error) {
         setMessage("Error al cargar datos. Inténtalo nuevamente.");
         console.error("Error fetching data:", error);
@@ -63,7 +54,6 @@ const MenuAdmi = () => {
   }, []);
 
   useEffect(() => {
-    // Filtrar colaboradores en tiempo real
     setFilteredCollaborators(
       collaborators.filter((user) =>
         user.nombre.toLowerCase().includes(searchCollaborators.toLowerCase())
@@ -72,7 +62,6 @@ const MenuAdmi = () => {
   }, [searchCollaborators, collaborators]);
 
   useEffect(() => {
-    // Filtrar administradores en tiempo real
     setFilteredAdministrators(
       administrators.filter((user) =>
         user.nombre.toLowerCase().includes(searchAdministrators.toLowerCase())
@@ -87,8 +76,7 @@ const MenuAdmi = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Validación básica
+
     if (!formData.ubicacion.trim()) {
       setMessage("La ubicación no puede estar vacía.");
       return;
@@ -101,12 +89,11 @@ const MenuAdmi = () => {
       setMessage("Debes seleccionar un administrador.");
       return;
     }
-  
+
     setLoading(true);
     setMessage("");
-  
+
     try {
-      // Enviar datos al backend para asignar el área y sensores
       const response = await axios.post(
         "https://tight-lexis-safenest-83078a32.koyeb.app/assign-area",
         {
@@ -121,8 +108,7 @@ const MenuAdmi = () => {
           },
         }
       );
-  
-      // Mostrar mensaje de éxito con el área creada
+
       setMessage(`Instalación registrada exitosamente. ID del área: ${response.data.area_id}`);
       setFormData({
         ubicacion: "",
@@ -131,7 +117,6 @@ const MenuAdmi = () => {
         usuarioId: "",
       });
     } catch (error) {
-      // Manejar errores del backend
       setMessage(
         error.response?.data?.detail || "Error al registrar la instalación. Inténtalo nuevamente."
       );
@@ -170,11 +155,73 @@ const MenuAdmi = () => {
     }
   };
 
+  const demoteUser = async (userId) => {
+    try {
+      await axios.put(
+        `https://tight-lexis-safenest-83078a32.koyeb.app/update-role`,
+        {
+          user_id: userId,
+          new_role: "colaborador",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setMessage("Administrador degradado a colaborador exitosamente.");
+      setAdministrators((prev) => prev.filter((user) => user.id !== userId));
+      setFilteredAdministrators((prev) =>
+        prev.filter((user) => user.id !== userId)
+      );
+      setCollaborators((prev) => [
+        ...prev,
+        administrators.find((user) => user.id === userId),
+      ]);
+    } catch (error) {
+      setMessage("Error al degradar administrador. Inténtalo nuevamente.");
+      console.error("Error demoting user:", error);
+    }
+  };
+
+  const openModal = async (admin) => {
+    setSelectedAdmin(admin);
+    setShowModal(true);
+    try {
+      const sensorsResponse = await axios.get(
+        `https://tight-lexis-safenest-83078a32.koyeb.app/admin-sensors/${admin.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const logsResponse = await axios.get(
+        `https://tight-lexis-safenest-83078a32.koyeb.app/admin-logs/${admin.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setAdminSensors(sensorsResponse.data);
+      setAdminLogs(logsResponse.data);
+    } catch (error) {
+      console.error("Error fetching admin data:", error);
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedAdmin(null);
+    setAdminSensors([]);
+    setAdminLogs([]);
+  };
+
   return (
     <div className="p-6 bg-gradient-to-b from-blue-900 to-blue-700 min-h-screen text-white">
       <h1 className="text-3xl font-bold mb-4">Panel de SuperAdministrador</h1>
 
-      {/* Formulario para asignar área y sensores */}
       <div className="bg-blue-800 p-6 rounded-lg mb-6">
         <h2 className="text-2xl font-semibold mb-4">Asignar Área y Sensores</h2>
         {message && (
@@ -262,7 +309,6 @@ const MenuAdmi = () => {
         </form>
       </div>
 
-      {/* Buscador y listado de colaboradores */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Colaboradores</h2>
         <input
@@ -292,7 +338,6 @@ const MenuAdmi = () => {
         </ul>
       </div>
 
-      {/* Buscador y listado de administradores */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Administradores</h2>
         <input
@@ -306,15 +351,52 @@ const MenuAdmi = () => {
           {filteredAdministrators.map((user) => (
             <li
               key={user.id}
-              className="bg-blue-800 p-4 rounded-lg flex justify-between"
+              className="bg-blue-800 p-4 rounded-lg flex justify-between items-center"
             >
-              <span>
+              <span onClick={() => openModal(user)} className="cursor-pointer">
                 {user.nombre} - {user.rol}
               </span>
+              <button
+                onClick={() => demoteUser(user.id)}
+                className="bg-red-500 px-3 py-1 rounded-lg hover:bg-red-700 transition duration-200"
+              >
+                Degradar a Colaborador
+              </button>
             </li>
           ))}
         </ul>
       </div>
+
+      {showModal && selectedAdmin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg text-black w-1/2">
+            <h2 className="text-xl font-bold mb-4">Detalles del Administrador</h2>
+            <p><strong>Nombre:</strong> {selectedAdmin.nombre}</p>
+            <p><strong>Rol:</strong> {selectedAdmin.rol}</p>
+
+            <h3 className="text-lg font-semibold mt-4">Sensores:</h3>
+            <ul className="list-disc pl-6">
+              {adminSensors.map((sensor, index) => (
+                <li key={index}>Tipo: {sensor.tipo}, Estado: {sensor.estado}</li>
+              ))}
+            </ul>
+
+            <h3 className="text-lg font-semibold mt-4">Logs:</h3>
+            <ul className="list-disc pl-6">
+              {adminLogs.map((log, index) => (
+                <li key={index}>Acción: {log.accion}, Fecha: {log.fecha}</li>
+              ))}
+            </ul>
+
+            <button
+              onClick={closeModal}
+              className="bg-blue-500 px-4 py-2 rounded-lg text-white mt-4 hover:bg-blue-700 transition duration-200"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
