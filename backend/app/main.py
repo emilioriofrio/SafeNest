@@ -322,6 +322,30 @@ def join_group(group_request: GroupRequest):
     finally:
         cursor.close()
         connection.close()
+# Endpoint para solicitar los pagos
+@app.get("/purchase-requests")
+def get_purchase_requests():
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # Consultar todas las solicitudes de compra
+        cursor.execute("""
+            SELECT pr.id, u.nombre AS nombreUsuario, pr.plan_name, pr.status, pr.created_at
+            FROM plan_requests pr
+            INNER JOIN usuarios u ON pr.user_id = u.id
+            WHERE pr.status = 'pending';
+        """)
+        requests = cursor.fetchall()
+        return requests
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching purchase requests: {e}")
+
+    finally:
+        cursor.close()
+        connection.close()
+
 
 # Endpoint para solicitar información del servicio
 @app.post("/request-service-info/")
