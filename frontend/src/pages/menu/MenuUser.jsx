@@ -107,8 +107,8 @@ const MenuUser = () => {
   const handlePlanSelect = async (plan) => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      if (!user) throw new Error("Usuario no autenticado");
-
+      if (!user || !user.user_id) throw new Error("Usuario no autenticado o ID faltante");
+  
       await axios.post(
         "https://tight-lexis-safenest-83078a32.koyeb.app/request-plan/",
         {
@@ -116,7 +116,7 @@ const MenuUser = () => {
           plan_name: plan.name,
         }
       );
-
+  
       setSelectedPlan(plan);
       setMessage(`Has seleccionado el plan ${plan.name}. Tu solicitud ha sido enviada.`);
     } catch (error) {

@@ -283,9 +283,13 @@ def perform_installation(request: InstallationRequest):
 # Endpoint para solicitar un plan
 @app.post("/request-plan/")
 def request_plan(plan_request: PlanRequest):
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
+        # Validar datos de entrada
+        if not plan_request.user_id or not plan_request.plan_name:
+            raise HTTPException(status_code=400, detail="Missing user_id or plan_name")
 
         # Insertar la solicitud en la base de datos
         cursor.execute(
@@ -296,14 +300,18 @@ def request_plan(plan_request: PlanRequest):
             """,
             (plan_request.user_id, plan_request.plan_name),
         )
-        request_id = cursor.fetchone()["id"]
+        result = cursor.fetchone()
+        request_id = result["id"]
         connection.commit()
+
         return {"message": "Plan request submitted successfully.", "request_id": request_id}
-    except Exception as e:
+    except psycopg2.Error as e:
+        connection.rollback()
         raise HTTPException(status_code=500, detail=f"Error processing plan request: {str(e)}")
     finally:
         cursor.close()
         connection.close()
+
 
 # Endpoint para unirse a un grupo
 @app.post("/join-group/")
