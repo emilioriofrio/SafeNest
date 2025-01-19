@@ -10,6 +10,7 @@ const Navbar = () => {
   useEffect(() => {
     // Recuperar el usuario desde localStorage (si existe)
     const storedUser = localStorage.getItem("user");
+    console.log(storedUser);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }

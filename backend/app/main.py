@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
 from passlib.context import CryptContext
 from pydantic import BaseModel
+from typing import List
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from fastapi.middleware.cors import CORSMiddleware
 
 # Cargar variables de entorno
@@ -60,6 +63,12 @@ class UpdateUserRole(BaseModel):
     user_id: int
     new_role: str
 
+# Modelo de solicitud para "realizar instalación"
+class InstallationRequest(BaseModel):
+    area_name: str
+    user_id: int
+    num_sound_sensors: int
+    num_motion_sensors: int
 # Registro de usuario
 @app.post("/register")
 def register_user(user: UserRegister):
@@ -188,6 +197,61 @@ def update_user_role(data: UpdateUserRole):
         cursor.close()
         connection.close()
 
+
+@app.post("/install")
+def perform_installation(request: InstallationRequest):
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # Verificar que el usuario es administrador
+        cursor.execute("SELECT rol FROM usuarios WHERE id = %s;", (request.user_id,))
+        user = cursor.fetchone()
+        if not user or user["rol"] != "administrador":
+            raise HTTPException(status_code=403, detail="El usuario no tiene permisos para realizar esta acción.")
+
+        # Crear el área
+        cursor.execute(
+            """
+            INSERT INTO areas (nombre, usuario_id)
+            VALUES (%s, %s)
+            RETURNING id;
+            """,
+            (request.area_name, request.user_id)
+        )
+        area_id = cursor.fetchone()["id"]
+
+        # Crear sensores de sonido
+        for _ in range(request.num_sound_sensors):
+            cursor.execute(
+                """
+                INSERT INTO sensores (tipo, estado, area_id)
+                VALUES ('KY-038', 'activo', %s);
+                """,
+                (area_id,)
+            )
+
+        # Crear sensores de movimiento
+        for _ in range(request.num_motion_sensors):
+            cursor.execute(
+                """
+                INSERT INTO sensores (tipo, estado, area_id)
+                VALUES ('PIR', 'activo', %s);
+                """,
+                (area_id,)
+            )
+
+        # Confirmar transacción
+        connection.commit()
+        return {"message": "Instalación completada exitosamente", "area_id": area_id}
+
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al realizar la instalación: {e}")
+
+    finally:
+        cursor.close()
+        connection.close()
 # Verificar API
 @app.get("/")
 def root():
