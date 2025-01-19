@@ -42,7 +42,7 @@ app = FastAPI(title="Auth API", version="1.0.0")
 # Middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Cambiar al dominio del frontend
+    allow_origins=["http://localhost:5173","safe-nest.vercel.app"],  # Cambiar al dominio del frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
