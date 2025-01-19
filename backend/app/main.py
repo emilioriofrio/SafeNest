@@ -47,7 +47,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Modelo para la solicitud de un plan
+class PlanRequest(BaseModel):
+    user_id: int
+    plan_name: str
 
+# Modelo para unirse a un grupo
+class GroupRequest(BaseModel):
+    user_id: int
+    group_id: int
+
+# Modelo para solicitar información
+class ServiceInfoRequest(BaseModel):
+    user_id: int
+    message: str
 # Modelos Pydantic
 class UserRegister(BaseModel):
     nombre: str
@@ -249,6 +262,81 @@ def perform_installation(request: InstallationRequest):
         connection.rollback()
         raise HTTPException(status_code=500, detail=f"Error al realizar la instalación: {e}")
 
+    finally:
+        cursor.close()
+        connection.close()
+
+# Endpoint para solicitar un plan
+@app.post("/request-plan/")
+def request_plan(plan_request: PlanRequest):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Insertar la solicitud en la base de datos
+        cursor.execute(
+            """
+            INSERT INTO plan_requests (user_id, plan_name, status, created_at)
+            VALUES (%s, %s, 'pending', NOW())
+            RETURNING id;
+            """,
+            (plan_request.user_id, plan_request.plan_name),
+        )
+        request_id = cursor.fetchone()["id"]
+        connection.commit()
+        return {"message": "Plan request submitted successfully.", "request_id": request_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing plan request: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
+
+# Endpoint para unirse a un grupo
+@app.post("/join-group/")
+def join_group(group_request: GroupRequest):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Insertar la solicitud de unirse al grupo
+        cursor.execute(
+            """
+            INSERT INTO group_requests (user_id, group_id, status, created_at)
+            VALUES (%s, %s, 'pending', NOW())
+            RETURNING id;
+            """,
+            (group_request.user_id, group_request.group_id),
+        )
+        request_id = cursor.fetchone()["id"]
+        connection.commit()
+        return {"message": "Group join request submitted successfully.", "request_id": request_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing group join request: {str(e)}")
+    finally:
+        cursor.close()
+        connection.close()
+
+# Endpoint para solicitar información del servicio
+@app.post("/request-service-info/")
+def request_service_info(service_info_request: ServiceInfoRequest):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Insertar la solicitud de información del servicio
+        cursor.execute(
+            """
+            INSERT INTO service_info_requests (user_id, message, created_at)
+            VALUES (%s, %s, NOW())
+            RETURNING id;
+            """,
+            (service_info_request.user_id, service_info_request.message),
+        )
+        request_id = cursor.fetchone()["id"]
+        connection.commit()
+        return {"message": "Service information request submitted successfully.", "request_id": request_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing service info request: {str(e)}")
     finally:
         cursor.close()
         connection.close()
