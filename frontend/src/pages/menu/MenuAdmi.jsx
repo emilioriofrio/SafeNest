@@ -179,7 +179,7 @@ const MenuAdmi = () => {
               name="ubicacion"
               value={formData.ubicacion}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              className="text-black w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ej. Calle 123, Ciudad"
               required
             />
@@ -193,7 +193,7 @@ const MenuAdmi = () => {
               name="sensoresSonido"
               value={formData.sensoresSonido}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              className="text-black w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
               min="0"
               required
             />
@@ -207,26 +207,26 @@ const MenuAdmi = () => {
               name="sensoresMovimiento"
               value={formData.sensoresMovimiento}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              className="text-black w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
               min="0"
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">
-              Asignar a Usuario (Colaborador)
+              Asignar a Usuario (Administrador)
             </label>
             <select
               name="usuarioId"
               value={formData.usuarioId}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              className="text-black w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
               required
             >
               <option value="" disabled>
-                Selecciona un colaborador
+                Selecciona un administrador
               </option>
-              {collaborators.map((user) => (
+              {administrators.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.nombre}
                 </option>
