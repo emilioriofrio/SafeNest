@@ -588,6 +588,7 @@ async def post_logs(request: Request):
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
+        status_code=500
     finally:
         connection.close()
 
