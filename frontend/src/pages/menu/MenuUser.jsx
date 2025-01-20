@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+import AdminDashboard  from "../../layouts/AdminDashboard"; 
 const MenuUser = () => {
   const [userRole, setUserRole] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -225,13 +225,10 @@ const MenuUser = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Información de Sensores</h2>
           <ul className="space-y-4">
-            {sensorData.map((sensor, index) => (
-              <li key={index} className="bg-blue-800 p-4 rounded-lg">
-                Tipo: {sensor.tipo} | Estado: {sensor.estado} | Área: {sensor.area_id}
-              </li>
-            ))}
+            <AdminDashboard />
           </ul>
         </div>
+        
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Invitar Colaborador</h2>
           <input
@@ -248,24 +245,7 @@ const MenuUser = () => {
             Enviar Invitación
           </button>
         </div>
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Logs de Detección</h2>
-          <ul className="space-y-4">
-            {logs.map((log, index) => (
-              <li key={index} className="bg-blue-800 p-4 rounded-lg">
-                {log.accion} - Fecha: {new Date(log.fecha).toLocaleString()}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Alertas</h2>
-          {alerts.map((alert, index) => (
-            <div key={index} className="bg-red-800 p-4 rounded-lg">
-              {alert.mensaje}
-            </div>
-          ))}
-        </div>
+        
       </div>
     );
   }
