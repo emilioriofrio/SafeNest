@@ -599,10 +599,10 @@ def get_logs(limit: int = 50):
     connection = get_db_connection()
     cursor = connection.cursor(cursor_factory=RealDictCursor)
     try:
-        # Obtener los registros más recientes de los logs
+        # Obtener los registros más recientes de los logs con el tipo del sensor
         cursor.execute(
             """
-            SELECT logs.id, sensores.tipo, logs.accion, logs.fecha
+            SELECT logs.id, sensores.tipo, sensores.id AS sensor_id, logs.accion, logs.fecha
             FROM logs
             JOIN sensores ON logs.sensor_id = sensores.id
             ORDER BY logs.fecha DESC
@@ -618,6 +618,7 @@ def get_logs(limit: int = 50):
     finally:
         cursor.close()
         connection.close()
+
 
 
 # Ejemplo de endpoint actualizado

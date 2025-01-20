@@ -45,14 +45,16 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log, index) => (
-                <tr key={index} className="text-center">
-                  <td className="px-4 py-2">{new Date(log.fecha).toLocaleString()}</td>
-                  <td className="px-4 py-2">{log.sensor_id}</td>
-                  <td className="px-4 py-2">{log.accion}</td>
-                </tr>
-              ))}
-            </tbody>
+  {logs.map((log, index) => (
+    <tr key={index} className="text-center">
+      <td className="px-4 py-2">{new Date(log.fecha).toLocaleString()}</td>
+      <td className="px-4 py-2">
+        {log.sensor_id} - {log.tipo}
+      </td>
+      <td className="px-4 py-2">{log.accion}</td>
+    </tr>
+  ))}
+</tbody>
           </table>
         </div>
       </section>
