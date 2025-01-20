@@ -546,8 +546,9 @@ async def post_logs(request: Request):
         # Validar los datos enviados
         sensor_id = data.get("sensor_id")
         estado = data.get("estado")
+        usuario_id = data.get("usuario_id")  # Asegúrate de enviar este campo desde el Arduino
 
-        if sensor_id is None or estado is None:
+        if sensor_id is None or estado is None or usuario_id is None:
             raise HTTPException(status_code=400, detail="Datos incompletos en la solicitud")
 
         # Conexión a la base de datos
@@ -559,7 +560,7 @@ async def post_logs(request: Request):
         if cursor.fetchone() is None:
             raise HTTPException(status_code=404, detail="Sensor no registrado")
 
-        # Determinar la acción según los valores permitidos en el enum
+        # Determinar la acción
         accion = "Detectado" if estado == 1 else "Inactivo"
 
         # Actualizar estado y última actividad del sensor
@@ -575,10 +576,10 @@ async def post_logs(request: Request):
         # Registrar en la tabla de logs
         cursor.execute(
             """
-            INSERT INTO logs (sensor_id, accion, fecha)
-            VALUES (%s, %s, %s);
+            INSERT INTO logs (sensor_id, usuario_id, accion, fecha)
+            VALUES (%s, %s, %s, %s);
             """,
-            (sensor_id, accion, datetime.now())
+            (sensor_id, usuario_id, accion, datetime.now())
         )
 
         connection.commit()
@@ -587,9 +588,9 @@ async def post_logs(request: Request):
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
-        status_code=500
     finally:
         connection.close()
+
 
 
 @app.get("/logs")
