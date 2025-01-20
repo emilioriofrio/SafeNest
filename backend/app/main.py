@@ -8,6 +8,8 @@ from typing import List
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+
 
 # Cargar variables de entorno
 load_dotenv()
