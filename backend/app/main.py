@@ -96,6 +96,13 @@ class UpdateSensorRequest(BaseModel):
     estado: str
     ultima_actividad: str  # Formato ISO 8601 (YYYY-MM-DDTHH:MM:SS)
     ubicacion: str
+
+# Modelo de solicitud
+class UpdateSensorRequest(BaseModel):
+    sensor_id: int
+    estado: str
+    ultima_actividad: str  # Formato ISO 8601 (YYYY-MM-DDTHH:MM:SS)
+    ubicacion: str
 # Registro de usuario
 @app.post("/register")
 def register_user(user: UserRegister):
