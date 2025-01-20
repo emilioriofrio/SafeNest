@@ -539,7 +539,6 @@ def update_sensor(request: UpdateSensorRequest):
         cursor.close()
         connection.close()
 
-
 @app.post("/logs")
 async def post_logs(request: Request):
     try:
@@ -560,7 +559,7 @@ async def post_logs(request: Request):
         if cursor.fetchone() is None:
             raise HTTPException(status_code=404, detail="Sensor no registrado")
 
-        # Determinar la acción
+        # Determinar la acción según los valores permitidos en el enum
         accion = "Detectado" if estado == 1 else "Inactivo"
 
         # Actualizar estado y última actividad del sensor
