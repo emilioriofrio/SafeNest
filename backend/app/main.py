@@ -531,12 +531,36 @@ def update_sensor(request: UpdateSensorRequest):
         connection.close()
 
 
+@app.post("/logs")
+async def post_logs(request: Request):
+    try:
+        data = await request.json()
+        sensor_sonido = data.get("sensor_sonido", 0)
+        sensor_movimiento = data.get("sensor_movimiento", 0)
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+            INSERT INTO logs (sensor_id, accion, fecha)
+            VALUES (%s, %s, %s)
+            """,
+            (
+                "Sonido" if sensor_sonido else "Movimiento",
+                "Detectado" if sensor_sonido or sensor_movimiento else "Inactivo",
+                datetime.now()
+            ),
+        )
+        connection.commit()
+        return JSONResponse({"status": "success", "message": "Log registrado correctamente"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
 @app.get("/logs")
 def get_logs():
     connection = get_db_connection()
     cursor = connection.cursor(cursor_factory=RealDictCursor)
     try:
-        # Obtener los logs más recientes (últimos 50 registros como ejemplo)
         cursor.execute(
             """
             SELECT id, sensor_id, accion, fecha
@@ -547,8 +571,6 @@ def get_logs():
         )
         logs = cursor.fetchall()
         return logs
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener los logs: {str(e)}")
     finally:
         cursor.close()
         connection.close()
